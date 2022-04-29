@@ -1,0 +1,13 @@
+一、概念
+protobuf是一种数据通信协议、数据存储协议，类似Jason,Xml，但是更高效
+可以用C++/Java/Golang/Python等进行
+
+二、使用(golang)
+1, 安装.proto文件编译器
+	apt install protobuf-compiler
+2, 安装protobuf的Go插件(原生protobuf不支持Go)
+	go install github.com/golang/protobuf/protoc-gen-go@latest
+2, 创建.proto文件，定义结构信息
+3, 根据.proto文件生成相应的.go包
+	protoc --go_out=. define.proto
+4, 将生成的.go文件放到合适位置，编写main.go进行调用

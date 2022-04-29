@@ -1,0 +1,2 @@
+Linux内核(C语言)和用户空间(Golang语言)使用Generic Netlink通信
+内核做为Server，用户作为Client，用户首先发起通信

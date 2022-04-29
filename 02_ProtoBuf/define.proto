@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+
+option go_package="./;hello";	//指定生成的go文件的路径，和所属的包名
+//package hello2;
+
+message People {
+
+  string Name= 1;
+  int32 Age = 2;
+  int32 Num= 3;
+  bytes Info=4;
+
+}

@@ -1,0 +1,30 @@
+package drv_comm
+
+//EDR GENL的支持的attr类型
+const (
+	EDR_ATTR_UNSPEC = iota
+	EDR_ATTR_SYNC
+
+	EDR_ATTR_TIMESTAMP /* u64 */
+	EDR_ATTR_CUR_PID   /* u64 */
+	EDR_ATTR_CHILD_PID /* u64 */
+	EDR_ATTR_TASKNAME  /* string */
+
+	EDR_ATTR_FLAG     /* u64 */
+	EDR_ATTR_FILENAME /* string */
+	__EDR_ATTR_MAX
+)
+
+//EDR GENL的支持的CMD类型
+const (
+	EDR_CMD_UNSPEC = iota
+	EDR_CMD_SYNC
+	EDR_CMD_CLONE_UPLOAD
+	EDR_CMD_EXIT_GROUP_UPLOAD
+	EDR_CMD_OPENAT_UPLOAD
+	__EDR_CMD_MAX
+)
+
+const (
+	SYNC_STR = "EDRSYNC"
+)
