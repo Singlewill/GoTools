@@ -1,0 +1,23 @@
+一、总览
+    所有以_test.go为后缀名的源文件在执行go build时不会被构建成包的一部分，它们是go test测试的一部分。
+    *_test.go文件中，有三种类型的函数：测试函数、基准(benchmark)测试函数、示例函数。
+
+    1,单元测试，用于测试逻辑行为是否正确.
+    2,基准测试，用于衡量函数的性能。比如计算执行时间,内存统计
+    3,示例测试，以Example为函数名前缀，用于比较程序输出？？,跟godoc也有关系
+二、命名
+    测试文件：xxx_test.go,测试文件package应该与被测函数同属一个package
+    单元测试函数：TestXxxx()
+    基准测试函数：BenchmarkXxx()
+    示例测试函数：ExampleXxx()
+三、测试
+    go test                     : 执行所有测试文件中的测试函数
+    go test xxx_test.go main.go        : 执行单个测试文件(需包含被测文件)
+    go test --run TestXxxx      : 执行单个测试函数
+    go test --bench=. benchmark_test.go main.go -benchmem  : 执行基准测试(需包含被测文件),windows下是-bench="."
+
+
+
+其他
+    t.Helper()   //标记测试公用函数为帮助函数，出错时打印被调用信息，个人认为用处不大
+    t.Parallel()    //标记并行，所有带t.Parallel()的测试用例并行执行
