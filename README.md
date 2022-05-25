@@ -6,5 +6,7 @@
 	Cobra是一个命令行程序库，包装自己的Go程序，表现的像命令行工具那样
 04_testing:
 	golang程序测试相关
+05_RPC
+	包含一般的RPC和结合protobuf的gRPC两个示例
 
 
