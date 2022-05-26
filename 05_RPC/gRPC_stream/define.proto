@@ -1,0 +1,23 @@
+syntax = "proto3"; // 指定proto版本
+
+// 指定golang包名
+option go_package = "./;edr_pb";
+
+// 定义Hello服务
+service RemoteServer {
+    // 定义UploadProcessInfo方法
+    rpc UploadProcessInfo(stream ProcessInfo) returns (ServerAck) {}
+}
+
+// HelloRequest 请求结构
+message ProcessInfo{
+    string Name = 1;
+	int64 PidCur = 2;
+	int64 PidChild = 3;
+	
+}
+
+// HelloResponse 响应结构
+message ServerAck{
+    int32 Ack = 1;
+}
