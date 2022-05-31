@@ -2,22 +2,22 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"grpc_server/edr_pb"
+	"io"
 	"net"
 
 	"google.golang.org/grpc"
 )
 
-type process_ops_server struct{}
+type server struct{}
 
-func (server *process_ops_server) UploadProcessInfo(stream edr_pb.RemoteServer_UploadProcessInfoServer) error {
+func (server *server) UploadProcessInfo(stream edr_pb.RemoteServer_UploadProcessInfoServer) error {
 	for {
 		tem, err := stream.Recv()
 		//客户端调用stream.CloseAndRecv()
 		if err == io.EOF {
 			fmt.Println("Got EOF")
-			return stream.SendAndClose(&edr_pb.ServerAck{Ack:0})
+			return stream.SendAndClose(&edr_pb.ServerAck{Ack: 0})
 		}
 		//客户端连接断开
 		if err != nil {
@@ -40,7 +40,7 @@ func main() {
 	s := grpc.NewServer()
 	// 注册服务
 	//API源自.proto文件自动生成
-	edr_pb.RegisterRemoteServerServer(s, &process_ops_server{})
+	edr_pb.RegisterRemoteServerServer(s, &server{})
 	//reflection.Register(s)
 	err = s.Serve(lis)
 	if err != nil {
