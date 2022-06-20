@@ -7,9 +7,11 @@
 04_testing:
 	golang程序测试相关
 05_RPC
-	远程过程调用，包含一般的RPC和结合protobuf的gRPC两个示例
+	远程过程调用，包含一般的RPC、结合protobuf、gRPC stream一共三个示例
 06_AST
 	抽象语法书，这里只是抄了一个网上案例，没有深入研究
+07_Gorouting
+	演示了限制控制Gorouting最大数量的方法
 
 	
 
