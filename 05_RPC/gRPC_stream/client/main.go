@@ -11,20 +11,69 @@ import (
 	"grpc_client/edr_pb"
 )
 
-func main() {
-	// 连接服务器
-	//conn, err := grpc.Dial(":8080", grpc.WithInsecure())
-	conn, err := grpc.Dial(":8080", grpc.WithTransportCredentials(insecure.NewCredentials()))
+var RemoteConn *grpc.ClientConn
+var RemoteClient edr_pb.RemoteServerClient
+
+var stream edr_pb.RemoteServer_UploadProcessInfoClient
+var stream_ok bool
+
+func RemoteServerDisonnect() {
+	fmt.Println("Disconnect")
+	if stream_ok {
+		stream.CloseAndRecv()
+	}
+	RemoteConn.Close()
+}
+
+func RemoteServerConnect(addr string) error {
+	RemoteConn, err := grpc.Dial(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		fmt.Printf("连接服务端失败: %s", err)
-		return
+		return err
 	}
-	defer conn.Close()
 	// 新建一个client对象
-	c := edr_pb.NewRemoteServerClient(conn)
+	RemoteClient = edr_pb.NewRemoteServerClient(RemoteConn)
 
 	//client推送流
-	stream, _ := c.UploadProcessInfo(context.Background())
+	stream, err = RemoteClient.UploadProcessInfo(context.Background())
+	if err != nil {
+		stream_ok = false
+		return err
+	}
+	stream_ok = true
+	return nil
+}
+
+func send_msg(info *edr_pb.ProcessInfo) error {
+	var err error
+	if !stream_ok {
+		stream, err = RemoteClient.UploadProcessInfo(context.Background())
+		if err != nil {
+			fmt.Println("Create stream failed")
+			return err
+		}
+	}
+	stream_ok = true
+	err = stream.Send(info)
+	if err != nil {
+		stream_ok = false
+	}
+	return err
+
+}
+
+func main() {
+	var err error
+	for {
+		err = RemoteServerConnect("127.0.0.1:8080")
+		if err == nil {
+			break
+		}
+		fmt.Println("RemoteServer Connect failed")
+		time.Sleep(5 * time.Second)
+	}
+	fmt.Println("RemoteServer Connect success")
+	defer RemoteServerDisonnect()
 
 	i := 0
 	for {
@@ -34,20 +83,11 @@ func main() {
 			PidCur:   int64(i),
 			PidChild: int64(i),
 		}
-		err := stream.Send(info)
-		//服务器连接断开
-		if err != nil {
-			break
-		}
+		send_msg(info)
 		time.Sleep(1 * time.Second)
-		if i > 10 {
+		if i > 100 {
 			break
 		}
 	}
-	for {
-	}
-
-	res, _ := stream.CloseAndRecv()
-	fmt.Println(res.Ack)
 
 }

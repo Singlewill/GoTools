@@ -9,9 +9,9 @@ import (
 	"google.golang.org/grpc"
 )
 
-type server struct{}
+type process_ops_server struct{}
 
-func (server *server) UploadProcessInfo(stream edr_pb.RemoteServer_UploadProcessInfoServer) error {
+func (server *process_ops_server) UploadProcessInfo(stream edr_pb.RemoteServer_UploadProcessInfoServer) error {
 	for {
 		tem, err := stream.Recv()
 		//客户端调用stream.CloseAndRecv()
@@ -40,7 +40,7 @@ func main() {
 	s := grpc.NewServer()
 	// 注册服务
 	//API源自.proto文件自动生成
-	edr_pb.RegisterRemoteServerServer(s, &server{})
+	edr_pb.RegisterRemoteServerServer(s, &process_ops_server{})
 	//reflection.Register(s)
 	err = s.Serve(lis)
 	if err != nil {
