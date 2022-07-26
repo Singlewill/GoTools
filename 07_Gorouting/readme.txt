@@ -1,0 +1,1 @@
+通过chan限制routing数量
