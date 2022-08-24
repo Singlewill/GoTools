@@ -1,0 +1,17 @@
+
+var streamProcessFork RemoteServer_UploadProcessForkClient
+
+func UploadProcessFork(info *ProcessForkInfo) {
+	var err error
+	if !streamProcessFork_ok {
+		streamProcessFork, err = RemoteClient.UploadProcessFork(context.Background())
+		if err != nil {
+			return
+		}
+	}
+	streamProcessFork_ok = true
+	err = streamProcessFork.Send(info)
+	if err != nil {
+		streamProcessFork_ok = false
+	}
+}

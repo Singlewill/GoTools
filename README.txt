@@ -14,7 +14,7 @@
 	远程过程调用，包含一般的RPC、结合protobuf、gRPC stream一共三个示例
 
 06_AST
-	抽象语法书，这里只是抄了一个网上案例，没有深入研究
+	抽象语法书，代码语义分析
 
 07_Gorouting
 	演示了限制控制Gorouting最大数量的方法
