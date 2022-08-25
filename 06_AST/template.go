@@ -2,10 +2,29 @@ package remote_server
 
 import (
 	"context"
+
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
+
+var RemoteConn *grpc.ClientConn
+var RemoteClient RemoteServerClient
 
 var streamProcessFork RemoteServer_UploadProcessForkClient
 var streamProcessFork_ok bool
+
+func RemoteServerConnect(addr string) error {
+	RemoteConn, err := grpc.Dial(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return err
+	}
+	RemoteClient = NewRemoteServerClient(RemoteConn)
+
+}
+
+func RemoteServerDisconnect() {
+	RemoteConn.Close()
+}
 
 //Fork信息上传
 //这里非阻塞，不判断返回值

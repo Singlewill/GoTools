@@ -11,6 +11,8 @@ import (
 	"log"
 )
 
+var FuncList = []string{"Fork", "Execve", "Read", "Write"}
+
 func astToGo(dst *bytes.Buffer, node interface{}) error {
 	addNewline := func() {
 		err := dst.WriteByte('\n') // add newline
@@ -19,7 +21,7 @@ func astToGo(dst *bytes.Buffer, node interface{}) error {
 		}
 	}
 
-	addNewline()
+	//addNewline()
 
 	err := format.Node(dst, token.NewFileSet(), node)
 	if err != nil {
@@ -31,7 +33,20 @@ func astToGo(dst *bytes.Buffer, node interface{}) error {
 	return nil
 }
 
-func getValueSpec(decls []ast.Decl) *ast.GenDecl {
+func getImportSpec(decls []ast.Decl) *ast.GenDecl {
+	for _, dl := range decls {
+		t, ok := dl.(*ast.GenDecl)
+		//虽然确定了GenDecl，但是GenDecl包含种类众多，比如import, const, type, var
+		//因此要做二次判断
+		if ok && t.Tok == token.IMPORT {
+			return t
+		}
+
+	}
+	return nil
+
+}
+func getVarSpec(decls []ast.Decl, key string) *ast.GenDecl {
 	//func getClientDecl(decls []ast.Decl) {
 	for _, dl := range decls {
 		t, ok := dl.(*ast.GenDecl)
@@ -39,8 +54,8 @@ func getValueSpec(decls []ast.Decl) *ast.GenDecl {
 		//因此要做二次判断
 		if ok {
 			//找值定义ValueSpec
-			_, ok := t.Specs[0].(*ast.ValueSpec)
-			if ok {
+			spec, ok := t.Specs[0].(*ast.ValueSpec)
+			if ok && spec.Names[0].Name == key {
 				return t
 			}
 		}
@@ -49,7 +64,7 @@ func getValueSpec(decls []ast.Decl) *ast.GenDecl {
 	return nil
 }
 
-func createValueSpec(t *ast.GenDecl, key string) (node interface{}) {
+func createValueSpec(t *ast.GenDecl, var_name string, type_name string) (node interface{}) {
 	//断言变量定义
 	spec, ok := t.Specs[0].(*ast.ValueSpec)
 	if !ok {
@@ -60,15 +75,15 @@ func createValueSpec(t *ast.GenDecl, key string) (node interface{}) {
 	if !ok {
 		return nil
 	}
-	spec.Names[0].Name = "streamProcess" + key
-	spec_type.Name = "RemoteServer_UploadProcess" + key + "Client"
+	spec.Names[0].Name = var_name
+	spec_type.Name = type_name
 	return t
 }
-func getFuncDecl(decls []ast.Decl) *ast.FuncDecl {
+func getFuncDecl(decls []ast.Decl, key string) *ast.FuncDecl {
 	//func getClientDecl(decls []ast.Decl) {
 	for _, dl := range decls {
 		t, ok := dl.(*ast.FuncDecl)
-		if ok {
+		if ok && t.Name.Name == key {
 			return t
 		}
 
@@ -76,7 +91,7 @@ func getFuncDecl(decls []ast.Decl) *ast.FuncDecl {
 	return nil
 }
 
-func createFuncDecl(t *ast.FuncDecl, key string) (node interface{}) {
+func createUploadDecl(t *ast.FuncDecl, key string) (node interface{}) {
 	//更改函数名
 	t.Name.Name = "UploadProcess" + key
 
@@ -162,61 +177,232 @@ func createFuncDecl(t *ast.FuncDecl, key string) (node interface{}) {
 }
 
 func main() {
+	var buf bytes.Buffer
 	fset := token.NewFileSet()
-	//f, err := parser.ParseFile(fset, "remote_comm.go", nil, parser.ParseComments)
-	f, err := parser.ParseFile(fset, "remote_comm.go", nil, 0)
+	f, err := parser.ParseFile(fset, "template.go", nil, 0)
 	if err != nil {
 		panic(err)
 	}
-	//ast.Print(fset, f)
-	//找到指定的变量定义
-	var buf bytes.Buffer
-	spec := getValueSpec(f.Decls)
-	if spec == nil {
-		fmt.Println("getValueSpace Failed\n")
+	//找到import语句
+	import_spec := getImportSpec(f.Decls)
+	if import_spec == nil {
+		fmt.Println("import spec not found\n")
+		return
 	}
-	templ := getFuncDecl(f.Decls)
-	if templ == nil {
-		fmt.Println("getFuncDecl Failed\n")
+	//找到四个变量定义
+	remote_conn_spec := getVarSpec(f.Decls, "RemoteConn")
+	if remote_conn_spec == nil {
+		fmt.Println("RemoteConn not found\n")
+		return
 	}
-
-	spec_new := createValueSpec(spec, "Fork")
-	err = astToGo(&buf, spec_new)
+	remote_client_spec := getVarSpec(f.Decls, "RemoteClient")
+	if remote_client_spec == nil {
+		fmt.Println("RemoteClient not found\n")
+	}
+	stream_client_spec := getVarSpec(f.Decls, "streamProcessFork")
+	if stream_client_spec == nil {
+		fmt.Println("streamProcessFork not found\n")
+	}
+	stream_client_ok_spec := getVarSpec(f.Decls, "streamProcessFork_ok")
+	if stream_client_ok_spec == nil {
+		fmt.Println("streamProcessFork_ok not found\n")
+	}
+	//找到3个函数定义
+	connect_func := getFuncDecl(f.Decls, "RemoteServerConnect")
+	if connect_func == nil {
+		fmt.Println("Disconnect not found\n")
+	}
+	disconnect_func := getFuncDecl(f.Decls, "RemoteServerDisconnect")
+	if disconnect_func == nil {
+		fmt.Println("RemoteServerDisconnect not found\n")
+	}
+	upload_func := getFuncDecl(f.Decls, "UploadProcessFork")
+	if upload_func == nil {
+		fmt.Println("UploadProcessFork not found\n")
+	}
+	//////////////////////////////////////////////////////////////////////////////
+	//准备文件写入
+	//0, 写入package语句和Import语句
+	buf.Write([]byte("package remote_server\n"))
+	err = astToGo(&buf, import_spec)
 	if err != nil {
 		return
 	}
-
-	func_new := createFuncDecl(templ, "Fork")
-	err = astToGo(&buf, func_new)
+	//1, 写入开头的两个变量，原样写入
+	err = astToGo(&buf, remote_conn_spec)
 	if err != nil {
 		return
 	}
-	ioutil.WriteFile("tmp.txt", buf.Bytes(), 0666)
-
-	/*
-		var buf bytes.Buffer
-		err = astToGo(&buf, client)
+	err = astToGo(&buf, remote_client_spec)
+	if err != nil {
+		return
+	}
+	//2, 按照开头的后两个变量，生成其他服务变量声明
+	for _, s := range FuncList {
+		spec := createValueSpec(stream_client_spec, "streamProcess"+s, "RemoteServer_UploadProcess"+s+"Client")
+		err = astToGo(&buf, spec)
 		if err != nil {
 			return
 		}
-		ioutil.WriteFile("tmp.txt", buf.Bytes(), 0666)
-	*/
-	/*
-		fmt.Println(f.Name.Name)
-		var buf bytes.Buffer
-		for _, fn := range f.Decls {
-			err := astToGo(&buf, fn)
-			if err != nil {
-				return
-			}
+		spec = createValueSpec(stream_client_ok_spec, "streamProcess"+s+"_ok", "bool")
+		err = astToGo(&buf, spec)
+		if err != nil {
+			return
+		}
+	}
+
+	//3, 生成其他upload函数
+	for _, s := range FuncList {
+		funcNode := createUploadDecl(upload_func, s)
+		err = astToGo(&buf, funcNode)
+		if err != nil {
+			return
+		}
+	}
+
+	//4, 生成disconnect函数
+	for _, s := range FuncList {
+		//定义新的表达式语句。类似A.B()形式
+		new_exprStmt := &ast.ExprStmt{
+			X: &ast.CallExpr{
+				Fun: &ast.SelectorExpr{
+					X: &ast.Ident{
+						Name: "streamProcess" + s,
+					},
+					Sel: &ast.Ident{
+						Name: "CloseAndRecv",
+					},
+				},
+			},
+		}
+		//将新表达式追加到原来的语句前面
+		disconnect_func.Body.List = append([]ast.Stmt{new_exprStmt}, disconnect_func.Body.List...)
+
+	}
+	err = astToGo(&buf, disconnect_func)
+	if err != nil {
+		return
+	}
+
+	//5, 生成connect函数
+	for _, s := range FuncList {
+		/*
+			body1 -->
+			streamProcessFork, err := RemoteClient.UploadProcessFork(context.Background())
+		*/
+		body1 := &ast.AssignStmt{
+			Lhs: []ast.Expr{ //两个左值
+				0: &ast.Ident{
+					Name: "streamProcess" + s,
+					Obj: &ast.Object{
+						Kind: ast.Var,
+						//Name: "RemoteConn"
+					},
+				},
+				1: &ast.Ident{
+					Name: "err",
+					Obj: &ast.Object{
+						Kind: ast.Var,
+						//Name: "err"
+					},
+				},
+			},
+			Tok: token.DEFINE,
+			Rhs: []ast.Expr{ //1个右值RemoteClient.UploadProcessFork(context.Background())
+				0: &ast.CallExpr{
+					Fun: &ast.SelectorExpr{ // ast.SelectorExpr代表A.B
+						X: &ast.Ident{
+							Name: "RemoteClient",
+						},
+						Sel: &ast.Ident{
+							Name: "UploadProcess" + s,
+						},
+					},
+					Args: []ast.Expr{ //参数，又是一个A.B()形式
+						0: &ast.CallExpr{
+							Fun: &ast.SelectorExpr{
+								X: &ast.Ident{
+									Name: "context",
+								},
+								Sel: &ast.Ident{
+									Name: "Background",
+								},
+							},
+						},
+					},
+				},
+			},
 		}
 
-		ioutil.WriteFile("tmp.txt", buf.Bytes(), 0666)
-	*/
-	/*
-		var buf bytes.Buffer
-		err = format.Node(&buf, fset, f)
-		err = ioutil.WriteFile("tmp.txt", buf.Bytes(), 0666)
-		fmt.Println(err)
-	*/
+		/*
+			body2 -->
+				if err != nil {
+					streamProcessFork_ok = false
+					return err
+				}
+
+		*/
+		body2 := &ast.IfStmt{
+			Cond: &ast.BinaryExpr{
+				X: &ast.Ident{
+					Name: "err",
+				},
+				Op: token.NEQ,
+				Y: &ast.Ident{
+					Name: "nil",
+				},
+			},
+			Body: &ast.BlockStmt{
+				List: []ast.Stmt{
+					0: &ast.AssignStmt{
+						Lhs: []ast.Expr{
+							0: &ast.Ident{
+								Name: "streamProcess" + s + "_ok",
+							},
+						},
+						Tok: token.ASSIGN,
+						Rhs: []ast.Expr{
+							0: &ast.Ident{
+								Name: "false",
+							},
+						},
+					},
+					1: &ast.ReturnStmt{
+						Results: []ast.Expr{
+							0: &ast.Ident{
+								Name: "err",
+							},
+						},
+					},
+				},
+			},
+		}
+
+		/*
+			body3 -->
+				streamProcessFork_ok = true
+		*/
+		body3 := &ast.AssignStmt{
+			Lhs: []ast.Expr{
+				0: &ast.Ident{
+					Name: "streamProcess" + s + "_ok",
+				},
+			},
+			Tok: token.ASSIGN,
+			Rhs: []ast.Expr{
+				0: &ast.Ident{
+					Name: "true",
+				},
+			},
+		}
+		//将3个body追加到函数体后
+		connect_func.Body.List = append(connect_func.Body.List, []ast.Stmt{body1, body2, body3}...)
+
+	}
+	err = astToGo(&buf, connect_func)
+	if err != nil {
+		return
+	}
+
+	ioutil.WriteFile("result.go", buf.Bytes(), 0666)
 }
