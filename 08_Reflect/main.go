@@ -112,15 +112,76 @@ func slice_test(p interface{}) interface{} {
 	return s.Interface()
 }
 
-func main() {
-	ps := People{"kako", "18", "1"}
-	parse2(ps)
+//传入[]People, 在函数体内进行追加
+//ps := make([]People, 0)
+//slice2_test(&ps)
+func slice2_test(p interface{}) error {
 
+	sT := reflect.TypeOf(p)
+	if sT.Kind() != reflect.Ptr {
+		fmt.Println("Must be reflect.Ptr")
+	}
+
+	//取数组的值
+	sVE := reflect.ValueOf(p).Elem()
+	//取数组中元素的类型	 <<-------------------
+	//p是[]People. 一次Elem()取元素类型p[0],二次Elem()取元素指针指向的元素
+	sEE := sT.Elem().Elem()
+	fmt.Println(sEE)
+	fmt.Printf("%v\n", sVE)
+
+	//根据reflect.Type创建reflect.Value对象
+	sON := reflect.New(sEE)
+	//对象的值
+	sONE := sON.Elem()
+	sONEId := sONE.FieldByName("ID")
+	sONEName := sONE.FieldByName("Name")
+	//sONEId.SetInt(10)
+	sONEId.SetString("10")
+	sONEName.SetString("李四")
+
+	// 创建一个新数组并把元素的值追加进去
+	newArr := make([]reflect.Value, 0)
+	newArr = append(newArr, sON.Elem())
+	resArr := reflect.Append(sVE, newArr...)
+	//实际上也可以直接把新元素追加到输入切片中，不用额外定义新数组
+	//resArr := reflect.Append(sVE, sONE)
+
+	// 最终结果给原数组
+	sVE.Set(resArr)
+
+	return nil
+}
+func basic_test(p interface{}) {
+	t := reflect.TypeOf(p)
+	fmt.Println(t)
+	fmt.Println(t.Elem())
+	fmt.Println(t.Elem().Elem())
+
+	v := reflect.ValueOf(p)
+	fmt.Println(v)
+	fmt.Println(v.Elem())
+}
+
+func main() {
+	ps := make([]People, 0)
+	p1 := People{"kako", "18", "1"}
+	ps = append(ps, p1)
+	//basic_test(&ps)
+	slice2_test(&ps)
+	fmt.Println(ps)
 	/*
-		ps := People{}
-		new := slice_test(ps)
-		fmt.Println(new)
-		fmt.Printf("%T\n", new)
+			ps := People{"kako", "18", "1"}
+			parse2(ps)
+				ps := People{}
+				new := slice_test(ps)
+				fmt.Println(new)
+				fmt.Printf("%T\n", new)
+		ps := make([]People, 0)
+		fmt.Printf("before %p\n", ps)
+
+		slice2_test(&ps)
+		fmt.Printf("after %p\n", ps)
 	*/
 
 }
