@@ -1,2 +1,5 @@
 golang ast还是比较复杂的，元素太多，接口类型太多，分析要根据*ast.File的结构来走
 这里演示了一个根据源码模板，生成源码的例子，有点杀鸡用牛刀的意思，实际中应该可以做的更多
+
+build :
+    go build .\main.go .\ImportSpec.go .\ValueSpec.go .\FuncDecl.go

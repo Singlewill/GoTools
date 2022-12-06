@@ -6,105 +6,157 @@ import (
 )
 var RemoteConn *grpc.ClientConn
 var RemoteClient RemoteServerClient
-var streamProcessFork RemoteServer_UploadProcessForkClient
-var streamProcessFork_ok bool
-var streamProcessExecve RemoteServer_UploadProcessExecveClient
-var streamProcessExecve_ok bool
-var streamProcessRead RemoteServer_UploadProcessReadClient
-var streamProcessRead_ok bool
-var streamProcessWrite RemoteServer_UploadProcessWriteClient
-var streamProcessWrite_ok bool
-func UploadProcessFork(info *ProcessForkInfo) {
-	var err error
-	if !streamProcessFork_ok {
-		streamProcessFork, err = RemoteClient.UploadProcessFork(context.Background())
-		if err != nil {
-			return
-		}
-	}
-	streamProcessFork_ok = true
-	err = streamProcessFork.Send(info)
-	if err != nil {
-		streamProcessFork_ok = false
-	}
-}
-func UploadProcessExecve(info *ProcessExecveInfo) {
-	var err error
-	if !streamProcessExecve_ok {
-		streamProcessExecve, err = RemoteClient.UploadProcessExecve(context.Background())
-		if err != nil {
-			return
-		}
-	}
-	streamProcessExecve_ok = true
-	err = streamProcessExecve.Send(info)
-	if err != nil {
-		streamProcessFork_ok = false
-	}
-}
-func UploadProcessRead(info *ProcessReadInfo) {
-	var err error
-	if !streamProcessRead_ok {
-		streamProcessRead, err = RemoteClient.UploadProcessRead(context.Background())
-		if err != nil {
-			return
-		}
-	}
-	streamProcessRead_ok = true
-	err = streamProcessRead.Send(info)
-	if err != nil {
-		streamProcessFork_ok = false
-	}
-}
-func UploadProcessWrite(info *ProcessWriteInfo) {
-	var err error
-	if !streamProcessWrite_ok {
-		streamProcessWrite, err = RemoteClient.UploadProcessWrite(context.Background())
-		if err != nil {
-			return
-		}
-	}
-	streamProcessWrite_ok = true
-	err = streamProcessWrite.Send(info)
-	if err != nil {
-		streamProcessFork_ok = false
-	}
-}
-func RemoteServerDisconnect() {
-	streamProcessWrite.CloseAndRecv()
-	streamProcessRead.CloseAndRecv()
-	streamProcessExecve.CloseAndRecv()
-	streamProcessFork.CloseAndRecv()
-	RemoteConn.Close()
-}
+var StreamProcessFork RemoteServer_UploadProcessForkClient
+var StreamProcessFork_ok bool
+var StreamProcessExit RemoteServer_UploadProcessExitClient
+var StreamProcessExit_ok bool
+var StreamExecve RemoteServer_UploadExecveClient
+var StreamExecve_ok bool
+var StreamFileOpen RemoteServer_UploadFileOpenClient
+var StreamFileOpen_ok bool
+var StreamFileRead RemoteServer_UploadFileReadClient
+var StreamFileRead_ok bool
+var StreamFileWrite RemoteServer_UploadFileWriteClient
+var StreamFileWrite_ok bool
 func RemoteServerConnect(addr string) error {
-	RemoteConn, err := grpc.Dial(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	RemoteConn, err = grpc.Dial(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return err
 	}
 	RemoteClient = NewRemoteServerClient(RemoteConn)
-	streamProcessFork, err := RemoteClient.UploadProcessFork(context.Background())
+	StreamProcessFork, err = RemoteClient.UploadProcessFork(context.Backgroud())
 	if err != nil {
-		streamProcessFork_ok = false
+		StreamProcessFork_ok = false
 		return err
 	}
-	streamProcessFork_ok = true
-	streamProcessExecve, err := RemoteClient.UploadProcessExecve(context.Background())
+	StreamProcessFork_ok = true
+	StreamProcessExit, err = RemoteClient.UploadProcessExit(context.Backgroud())
 	if err != nil {
-		streamProcessExecve_ok = false
+		StreamProcessExit_ok = false
 		return err
 	}
-	streamProcessExecve_ok = true
-	streamProcessRead, err := RemoteClient.UploadProcessRead(context.Background())
+	StreamProcessExit_ok = true
+	StreamExecve, err = RemoteClient.UploadExecve(context.Backgroud())
 	if err != nil {
-		streamProcessRead_ok = false
+		StreamExecve_ok = false
 		return err
 	}
-	streamProcessRead_ok = true
-	streamProcessWrite, err := RemoteClient.UploadProcessWrite(context.Background())
+	StreamExecve_ok = true
+	StreamFileOpen, err = RemoteClient.UploadFileOpen(context.Backgroud())
 	if err != nil {
-		streamProcessWrite_ok = false
+		StreamFileOpen_ok = false
 		return err
 	}
-	streamProcessWrite_ok = true
+	StreamFileOpen_ok = true
+	StreamFileRead, err = RemoteClient.UploadFileRead(context.Backgroud())
+	if err != nil {
+		StreamFileRead_ok = false
+		return err
+	}
+	StreamFileRead_ok = true
+	StreamFileWrite, err = RemoteClient.UploadFileWrite(context.Backgroud())
+	if err != nil {
+		StreamFileWrite_ok = false
+		return err
+	}
+	StreamFileWrite_ok = true
+}
+func RemoteServerDisconnect() {
+	StreamProcessFork.CloseAndRecv()
+	StreamProcessExit.CloseAndRecv()
+	StreamExecve.CloseAndRecv()
+	StreamFileOpen.CloseAndRecv()
+	StreamFileRead.CloseAndRecv()
+	StreamFileWrite.CloseAndRecv()
+	RemoteConn.Close()
+}
+func UploadProcessFork(info *ProcessForkInfo) {
+	var err error
+	if !StreamProcessFork_ok {
+		StreamProcessFork, err = RemoteClient.UploadProcessFork(context.Backgroud())
+		if err != nil {
+			return
+		}
+	}
+	StreamProcessFork_ok = true
+	err = StreamProcessFork.Send(info)
+	if err != nil {
+		StreamProcessFork_ok = false
+	}
+	return
+}
+func UploadProcessExit(info *ProcessExitInfo) {
+	var err error
+	if !StreamProcessExit_ok {
+		StreamProcessExit, err = RemoteClient.UploadProcessExit(context.Backgroud())
+		if err != nil {
+			return
+		}
+	}
+	StreamProcessExit_ok = true
+	err = StreamProcessExit.Send(info)
+	if err != nil {
+		StreamProcessExit_ok = false
+	}
+	return
+}
+func UploadExecve(info *ExecveInfo) {
+	var err error
+	if !StreamExecve_ok {
+		StreamExecve, err = RemoteClient.UploadExecve(context.Backgroud())
+		if err != nil {
+			return
+		}
+	}
+	StreamExecve_ok = true
+	err = StreamExecve.Send(info)
+	if err != nil {
+		StreamExecve_ok = false
+	}
+	return
+}
+func UploadFileOpen(info *FileOpenInfo) {
+	var err error
+	if !StreamFileOpen_ok {
+		StreamFileOpen, err = RemoteClient.UploadFileOpen(context.Backgroud())
+		if err != nil {
+			return
+		}
+	}
+	StreamFileOpen_ok = true
+	err = StreamFileOpen.Send(info)
+	if err != nil {
+		StreamFileOpen_ok = false
+	}
+	return
+}
+func UploadFileRead(info *FileReadInfo) {
+	var err error
+	if !StreamFileRead_ok {
+		StreamFileRead, err = RemoteClient.UploadFileRead(context.Backgroud())
+		if err != nil {
+			return
+		}
+	}
+	StreamFileRead_ok = true
+	err = StreamFileRead.Send(info)
+	if err != nil {
+		StreamFileRead_ok = false
+	}
+	return
+}
+func UploadFileWrite(info *FileWriteInfo) {
+	var err error
+	if !StreamFileWrite_ok {
+		StreamFileWrite, err = RemoteClient.UploadFileWrite(context.Backgroud())
+		if err != nil {
+			return
+		}
+	}
+	StreamFileWrite_ok = true
+	err = StreamFileWrite.Send(info)
+	if err != nil {
+		StreamFileWrite_ok = false
+	}
+	return
 }
