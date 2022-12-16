@@ -9,7 +9,7 @@ import (
 	"log"
 )
 
-var FuncList = []string{"ProcessFork", "ProcessExit", "Execve", "FileOpen", "FileRead", "FileWrite"}
+var FuncList = []string{"ProcessFork", "ProcessExit", "Execve", "FileOpen", "FileRead", "FileWrite", "TCPSendMsg", "TCPRecvMsg", "ConnectIpv4", "UDPSendMsg", "UDPRecvMsg"}
 
 func astToGo(dst *bytes.Buffer, node interface{}) error {
 	addNewline := func() {
@@ -152,5 +152,5 @@ func main() {
 		}
 	}
 
-	ioutil.WriteFile("result.go", buf.Bytes(), 0666)
+	ioutil.WriteFile("ast_generate.go", buf.Bytes(), 0666)
 }

@@ -11,7 +11,7 @@ genUploadFunc(): 生成函数定义，如下形式
 	func UploadProcessFork(info *ProcessForkInfo) {
 		var err error		//body 0
 		if !StreamProcessFork_ok {		//body 1
-			StreamProcessFork, err = RemoteClient.UploadProcessFork(context.Backgroud())
+			StreamProcessFork, err = RemoteClient.UploadProcessFork(context.Background())
 			if err != nil {
 				return
 			}
@@ -112,7 +112,7 @@ func genUploadFunc(key string) (node interface{}) {
 											Name: "context",
 										},
 										Sel: &ast.Ident{
-											Name: "Backgroud",
+											Name: "Background",
 										},
 									},
 									//无参数
@@ -260,6 +260,7 @@ func genConnectFunc(keys []string) (node interface{}) {
 		},
 		//函数体，初始化状态为：
 		/*
+			var err error
 			RemoteConn, err := grpc.Dial(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 			if err != nil {
 				return err
@@ -268,8 +269,26 @@ func genConnectFunc(keys []string) (node interface{}) {
 		*/
 		Body: &ast.BlockStmt{
 			List: []ast.Stmt{
+				//var err error
+				0: &ast.DeclStmt{
+					Decl: &ast.GenDecl{
+						Tok: token.VAR,
+						Specs: []ast.Spec{
+							0: &ast.ValueSpec{
+								Names: []*ast.Ident{
+									0: &ast.Ident{
+										Name: "err",
+									},
+								},
+								Type: &ast.Ident{
+									Name: "error",
+								},
+							},
+						},
+					},
+				},
 				//body 0 : 即第一行
-				0: &ast.AssignStmt{
+				1: &ast.AssignStmt{
 					Lhs: []ast.Expr{
 						//第一个左值
 						0: &ast.Ident{
@@ -330,7 +349,7 @@ func genConnectFunc(keys []string) (node interface{}) {
 						return err
 					}
 				*/
-				1: &ast.IfStmt{
+				2: &ast.IfStmt{
 					Cond: &ast.BinaryExpr{
 						X: &ast.Ident{
 							Name: "err",
@@ -355,7 +374,7 @@ func genConnectFunc(keys []string) (node interface{}) {
 				/*
 					RemoteClient = NewRemoteServerClient(RemoteConn)
 				*/
-				2: &ast.AssignStmt{
+				3: &ast.AssignStmt{
 					Lhs: []ast.Expr{
 						0: &ast.Ident{
 							Name: "RemoteClient",
@@ -421,7 +440,7 @@ func genConnectFunc(keys []string) (node interface{}) {
 									Name: "context",
 								},
 								Sel: &ast.Ident{
-									Name: "Backgroud",
+									Name: "Background",
 								},
 							},
 						},
@@ -480,6 +499,15 @@ func genConnectFunc(keys []string) (node interface{}) {
 		c.Body.List = append(c.Body.List, []ast.Stmt{body1, body2, body3}...)
 
 	}
+	// reurn err
+	body_return_err := &ast.ReturnStmt{
+		Results: []ast.Expr{
+			0: &ast.Ident{
+				Name: "err",
+			},
+		},
+	}
+	c.Body.List = append(c.Body.List, []ast.Stmt{body_return_err}...)
 
 	return c
 }
