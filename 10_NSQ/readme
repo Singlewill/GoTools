@@ -1,0 +1,20 @@
+一、概念
+	NSQ : 消息队列，不保证有序
+	生产者向某个topic发送消息，如果topic有一个或多个channel，那么该消息会被复制多份发送到每一个channel
+二、本机部署NSQ
+	1, git clone https://github.com/nsqio/nsq
+	2, cd nsq
+	3, make
+	4, sudo make install
+三、运行NSQ
+	// 执行nsqlookupd,指定tcp和http地址
+	1, nsqlookupd -tcp-address=0.0.0.0:4160 -http-address=0.0.0.0:4161  &
+
+	// 执行nsqd, 指定nsqlookupd TCP地址
+	2, nsqd --lookupd-tcp-address=127.0.0.1:4160 &
+
+	// 执行nsqadmin(web支持), 指定nsqlookupd HTTP地址
+	3, nsqadmin --lookupd-http-address=127.0.0.1:4161
+
+	eg : 其他参数的修改可看命令--help，比如修改监听端口
+四、执行golang代码
