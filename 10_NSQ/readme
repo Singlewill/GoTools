@@ -1,6 +1,9 @@
 一、概念
 	NSQ : 消息队列，不保证有序
 	生产者向某个topic发送消息，如果topic有一个或多个channel，那么该消息会被复制多份发送到每一个channel
+	1，n生产者1消费者： n个生产者向一个topic中丢数据
+	2, 1生产者n消费者： n个消费者使用共同的topic和channel
+	3, n生产者m消费者： .....
 二、本机部署NSQ
 	1, git clone https://github.com/nsqio/nsq
 	2, cd nsq
