@@ -31,6 +31,10 @@
 11_SSH
 	SSH客户端
 
+12_Telnet
+	Telnet客户端，包含设备架构判断
+
+
 
 	
 
